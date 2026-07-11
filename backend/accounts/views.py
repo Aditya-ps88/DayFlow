@@ -172,6 +172,7 @@ class CompanyConfigAPIView(generics.GenericAPIView):
                     "departments": [],
                     "roles": [],
                     "employment_types": [],
+                    "bypass_attendance": False,
                     "logo_url": logo_url,
                     "updated_at": None,
                 },
@@ -191,11 +192,6 @@ class CompanyConfigAPIView(generics.GenericAPIView):
         existing_logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
 
         instance = self.get_object()
-        if not existing_logo and not logo_url:
-            return Response(
-                {"detail": "Company logo is required when saving company setup."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
 
         payload = request.data.copy()
         payload.pop("logo_url", None)
@@ -225,6 +221,8 @@ class CompanyConfigAPIView(generics.GenericAPIView):
                 company_name=request.user.company_name,
                 defaults=defaults,
             )
+        elif existing_logo:
+            existing_logo.delete()
 
         refreshed_logo = CompanyLogo.objects.filter(company_name=request.user.company_name).first()
         response_data = self.get_serializer(config).data
